@@ -44,6 +44,7 @@ use sc_client_api::{
 use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApiServer};
 use sc_network::NetworkService;
 use sc_rpc::SubscriptionTaskExecutor;
+use sc_rpc::dev::{Dev, DevApiServer};
 use sc_rpc_api::DenyUnsafe;
 use sc_service::TaskManager;
 use sc_transaction_pool::{ChainApi, Pool};
@@ -172,6 +173,7 @@ where
 	BE::State: StateBackend<BlakeTwo256>,
 	BE::Blockchain: BlockchainBackend<Block>,
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
+   	C: sc_client_api::BlockBackend<Block>,
 	C: BlockchainEvents<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: CallApiAt<Block>,
@@ -308,6 +310,8 @@ where
 			.into_rpc(),
 		)?;
 	}
+
+        io.merge(Dev::new(Arc::clone(&client), deny_unsafe).into_rpc())?;
 
 	if let Some(tracing_config) = maybe_tracing_config {
 		if let Some(trace_filter_requester) = tracing_config.tracing_requesters.trace {
